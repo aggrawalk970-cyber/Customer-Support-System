@@ -1,0 +1,21 @@
+# Python virtual environment
+venv/
+.venv/
+env/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Private environment variables
+.env
+
+# Local SQLite databases (for mock runs)
+*.db
+customer_support.db
+
+# IDE settings
+.vscode/
+.idea/
