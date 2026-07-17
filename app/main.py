@@ -11,7 +11,7 @@ from app.db.models import Order, Ticket
 from app.agents.graph import compiled_graph
 from app.schemas import ChatRequest, ChatResponse, MessageSchema, ApproveRequest
 
-app = FastAPI(title="Multi-Agent Customer Support System API")
+app = FastAPI(title="Multi-Agent Customer Support System Agentic Pattern")
 
 # Configure CORS so your future frontend can communicate with the backend
 app.add_middleware(
