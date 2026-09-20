@@ -1,7 +1,7 @@
 from langchain_core.messages import AIMessage, SystemMessage
 from app.agents.state import AgentState
 from app.agents.llm import get_llm
-from app.db.connection import SessionLocal
+from app.db.session import SessionLocal
 from app.db.models import Ticket
 
 SUMMARIZER_PROMPT = """You are the Escalation Agent.
@@ -40,7 +40,11 @@ def escalation_node(state: AgentState) -> dict:
     llm = get_llm()
     summary_messages = [SystemMessage(content=SUMMARIZER_PROMPT)] + messages
     summary_response = llm.invoke(summary_messages)
-    summary_text = summary_response.content.strip()
+    content_raw = summary_response.content
+    if isinstance(content_raw, list):
+        summary_text = " ".join([str(c.get("text", "")) if isinstance(c, dict) else str(c) for c in content_raw]).strip()
+    else:
+        summary_text = str(content_raw).strip()
     
     # 2. Simulate Human handoff and create a ticket with status 'escalated' in database
     db = SessionLocal()
