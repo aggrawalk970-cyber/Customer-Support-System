@@ -29,7 +29,7 @@ A production-grade, multi-agent AI customer support backend built with **LangGra
 ```mermaid
 %%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TD;
-	__start__([<p>__start__</p>]):::first
+	__start__(["__start__"]):::first
 	trim_memory(trim_memory)
 	triage(triage)
 	billing_specialist(billing_specialist)
@@ -37,7 +37,7 @@ graph TD;
 	general_specialist(general_specialist)
 	escalation(escalation)
 	summarize_conversation(summarize_conversation)
-	__end__([<p>__end__</p>]):::last
+	__end__(["__end__"]):::last
 	__start__ --> trim_memory;
 	trim_memory --> triage;
 	triage -.-> billing_specialist;
