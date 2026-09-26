@@ -26,36 +26,7 @@ A production-grade, multi-agent AI customer support backend built with **LangGra
 
 ## 🏗️ Architecture (LangGraph Output)
 
-```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
-graph TD;
-	__start__(["__start__"]):::first
-	trim_memory(trim_memory)
-	triage(triage)
-	billing_specialist(billing_specialist)
-	technical_specialist(technical_specialist)
-	general_specialist(general_specialist)
-	escalation(escalation)
-	summarize_conversation(summarize_conversation)
-	__end__(["__end__"]):::last
-	__start__ --> trim_memory;
-	trim_memory --> triage;
-	triage -.-> billing_specialist;
-	triage -.-> escalation;
-	triage -.-> general_specialist;
-	triage -.-> technical_specialist;
-	billing_specialist -.-> escalation;
-	billing_specialist -.-> summarize_conversation;
-	technical_specialist -.-> escalation;
-	technical_specialist -.-> summarize_conversation;
-	general_specialist -.-> escalation;
-	general_specialist -.-> summarize_conversation;
-	escalation --> __end__;
-	summarize_conversation --> __end__;
-	classDef default fill:#f2f0ff,line-height:1.2
-	classDef first fill-opacity:0
-	classDef last fill-opacity:0
-```
+![Architecture (LangGraph Output)](ss/architecture.png)
 
 ---
 
