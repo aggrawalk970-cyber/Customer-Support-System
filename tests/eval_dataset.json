@@ -1,0 +1,180 @@
+{
+  "description": "Eval set for supervisor routing decisions. Each ticket has the raw customer message, the expected worker agent, and a note on why (useful for debugging misroutes). 'requires_approval' flags tickets whose resolution should trigger the human-in-the-loop interrupt.",
+  "tickets": [
+    {
+      "id": "T001",
+      "query": "I was charged twice for my subscription this month, can you check?",
+      "expected_agent": "billing",
+      "requires_approval": false,
+      "note": "Clear billing intent, needs invoice lookup"
+    },
+    {
+      "id": "T002",
+      "query": "Please cancel my subscription and refund the last payment, I don't want to keep talking about it.",
+      "expected_agent": "billing",
+      "requires_approval": true,
+      "note": "Refund + cancellation = risky action, should pause for approval"
+    },
+    {
+      "id": "T003",
+      "query": "The app crashes every time I try to upload a PDF larger than 5MB.",
+      "expected_agent": "technical",
+      "requires_approval": false,
+      "note": "Straightforward bug report"
+    },
+    {
+      "id": "T004",
+      "query": "I've emailed support three times this week and no one has replied. This is unacceptable.",
+      "expected_agent": "escalation",
+      "requires_approval": false,
+      "note": "Frustration + repeated contact = escalation signal, not a new technical/billing issue"
+    },
+    {
+      "id": "T005",
+      "query": "My invoice shows a $50 charge I don't recognize AND the dashboard won't load at all.",
+      "expected_agent": "billing",
+      "requires_approval": false,
+      "note": "Multi-intent ticket: billing question is the primary ask; test whether supervisor splits into two tasks or picks one. Good one to log disagreement on."
+    },
+    {
+      "id": "T006",
+      "query": "Can you delete my account and all my data permanently?",
+      "expected_agent": "technical",
+      "requires_approval": true,
+      "note": "Destructive action, must require human approval even though routed to technical"
+    },
+    {
+      "id": "T007",
+      "query": "How do I export my data to CSV?",
+      "expected_agent": "technical",
+      "requires_approval": false,
+      "note": "Simple how-to, no risky action"
+    },
+    {
+      "id": "T008",
+      "query": "Your product is a scam and I want my money back NOW or I'm reporting you.",
+      "expected_agent": "escalation",
+      "requires_approval": true,
+      "note": "Tone signals escalation even though 'money back' sounds like billing; refund still needs approval once resolved"
+    },
+    {
+      "id": "T009",
+      "query": "What plans do you offer for teams of 10+?",
+      "expected_agent": "billing",
+      "requires_approval": false,
+      "note": "Pricing/plan question, no account-specific action"
+    },
+    {
+      "id": "T010",
+      "query": "I think there's a bug but I'm not sure — sometimes my saved filters just disappear.",
+      "expected_agent": "technical",
+      "requires_approval": false,
+      "note": "Vague/uncertain phrasing, tests robustness to hedging language"
+    },
+    {
+      "id": "T011",
+      "query": "This is the second time my payment failed even though my card is valid. Fix this or I'm switching providers.",
+      "expected_agent": "billing",
+      "requires_approval": false,
+      "note": "Threat of churn but core issue is still billing/payment — tests over-triggering escalation on tone alone"
+    },
+    {
+      "id": "T012",
+      "query": "Can I speak to a manager about how my last ticket was handled?",
+      "expected_agent": "escalation",
+      "requires_approval": false,
+      "note": "Explicit escalation request"
+    },
+    {
+      "id": "T013",
+      "query": "asdkfj my thing broke pls help",
+      "expected_agent": "technical",
+      "requires_approval": false,
+      "note": "Low-quality/garbled input, tests graceful handling of noisy text"
+    },
+    {
+      "id": "T014",
+      "query": "Please issue a full refund for the annual plan I bought yesterday by mistake.",
+      "expected_agent": "billing",
+      "requires_approval": true,
+      "note": "Clear refund request, must trigger approval interrupt"
+    },
+    {
+      "id": "T015",
+      "query": "Is there an API rate limit? I'm getting 429 errors intermittently.",
+      "expected_agent": "technical",
+      "requires_approval": false,
+      "note": "Developer-facing technical question"
+    },
+    {
+      "id": "T016",
+      "query": "I was quoted one price on the phone and charged a different amount online.",
+      "expected_agent": "billing",
+      "requires_approval": false,
+      "note": "Discrepancy investigation, no action taken yet so no approval needed until resolution decided"
+    },
+    {
+      "id": "T017",
+      "query": "You people never fix anything. I've had 5 tickets open for a month.",
+      "expected_agent": "escalation",
+      "requires_approval": false,
+      "note": "Pattern-of-neglect complaint, not a single new issue"
+    },
+    {
+      "id": "T018",
+      "query": "Does your platform support SSO with Okta?",
+      "expected_agent": "technical",
+      "requires_approval": false,
+      "note": "Pre-sales technical question, tests boundary between technical and billing/sales"
+    },
+    {
+      "id": "T019",
+      "query": "Charge me for the upgrade and also delete my old workspace, both today please.",
+      "expected_agent": "billing",
+      "requires_approval": true,
+      "note": "Two actions across two domains (billing charge + destructive delete); good stress test for single-agent routing vs multi-step plan"
+    },
+    {
+      "id": "T020",
+      "query": "thanks for the quick fix yesterday, just confirming it's still working fine",
+      "expected_agent": "technical",
+      "requires_approval": false,
+      "note": "Not actually a problem — tests false-positive routing on a closed/positive message"
+    },
+    {
+      "id": "T021",
+      "query": "I want to downgrade my plan starting next billing cycle.",
+      "expected_agent": "billing",
+      "requires_approval": false,
+      "note": "Future-dated plan change, not immediately destructive, arguably no approval needed — good disagreement case to discuss"
+    },
+    {
+      "id": "T022",
+      "query": "Legal here — we need all account activity logs for a compliance audit by Friday.",
+      "expected_agent": "escalation",
+      "requires_approval": true,
+      "note": "Legal/compliance request, high-stakes and time-boxed, should never be auto-resolved by a worker agent"
+    },
+    {
+      "id": "T023",
+      "query": "The mobile app keeps logging me out every 5 minutes on iOS 18.",
+      "expected_agent": "technical",
+      "requires_approval": false,
+      "note": "Platform-specific bug report"
+    },
+    {
+      "id": "T024",
+      "query": "I paid for premium but I'm still seeing ads.",
+      "expected_agent": "billing",
+      "requires_approval": false,
+      "note": "Looks technical (ads showing) but root cause is billing/entitlement mismatch — classic misroute trap"
+    },
+    {
+      "id": "T025",
+      "query": "hi",
+      "expected_agent": "technical",
+      "requires_approval": false,
+      "note": "No actual content — tests fallback/default behavior when intent is empty. Consider a 'clarify' path rather than forcing a category."
+    }
+  ]
+}

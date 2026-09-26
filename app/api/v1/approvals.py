@@ -21,7 +21,7 @@ import datetime
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -85,18 +85,33 @@ def resolve_approval(request: Request, thread_id: str, body: ResolveApprovalRequ
     )
 
     # ── Update LangGraph state ────────────────────────────────────────────────
+    # IMPORTANT: Gemini (and most LLMs) reject conversations that end with
+    # an AI/model turn. We must inject a HumanMessage so the graph resumes
+    # with a user turn at the end of the message history.
     if body.approve:
         compiled_graph.update_state(
             config,
-            {"approved_by_human": True},
+            {
+                "approved_by_human": True,
+                "messages": [
+                    HumanMessage(
+                        content=(
+                            "My escalation has been approved by the supervisor. "
+                            "Please connect me with a human agent to resolve my issue."
+                        )
+                    )
+                ],
+            },
             as_node="triage",
         )
     else:
         feedback = body.feedback or "Escalation rejected by supervisor."
+        # For rejection we end with an AI message (denial) — no further invoke needed
         denial_msg = AIMessage(
             content=(
                 f"Your escalation request was reviewed and declined by a human supervisor. "
-                f"Reason: {feedback}. We will continue assisting you here."
+                f"Reason: {feedback}. We will continue assisting you here — "
+                f"please describe your issue again and we will do our best to help."
             )
         )
         compiled_graph.update_state(
@@ -123,8 +138,10 @@ def resolve_approval(request: Request, thread_id: str, body: ResolveApprovalRequ
     finally:
         db.close()
 
-    # ── Resume graph execution ────────────────────────────────────────────────
-    compiled_graph.invoke(None, config)
+    # ── Resume graph execution (only for approvals, not rejections) ───────────
+    # For rejection: state already updated with denial message, no need to invoke
+    if body.approve:
+        compiled_graph.invoke(None, config)
 
     new_state = compiled_graph.get_state(config)
     values = new_state.values

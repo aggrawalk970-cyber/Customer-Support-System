@@ -20,8 +20,29 @@ class Ticket(Base):
     issue = Column(Text, nullable=False)
     status = Column(String(50), default="open")           # open | resolved | escalated
     conversation_summary = Column(Text, nullable=True)
+    
+    # Cost & Token Tracking
+    prompt_tokens = Column(Integer, default=0)
+    completion_tokens = Column(Integer, default=0)
+    total_tokens = Column(Integer, default=0)
+    estimated_cost_usd = Column(Float, default=0.0)
+    
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class ChatStats(Base):
+    """
+    Global table to track token usage and cost per interaction for the /stats endpoint.
+    """
+    __tablename__ = "chat_stats"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    date = Column(DateTime, server_default=func.now())
+    prompt_tokens = Column(Integer, default=0)
+    completion_tokens = Column(Integer, default=0)
+    total_tokens = Column(Integer, default=0)
+    estimated_cost_usd = Column(Float, default=0.0)
 
 
 class Order(Base):
@@ -57,3 +78,14 @@ class Approval(Base):
     approved_by = Column(String(255), nullable=True)      # Supervisor identifier (future auth)
     created_at = Column(DateTime, server_default=func.now())
     resolved_at = Column(DateTime, nullable=True)
+
+
+class UserProfile(Base):
+    """
+    Stores long-term semantic memory for users (preferences, context summary).
+    """
+    __tablename__ = "user_profiles"
+
+    user_email = Column(String(255), primary_key=True, index=True)
+    context_summary = Column(Text, nullable=True)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

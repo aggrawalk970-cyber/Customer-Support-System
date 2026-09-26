@@ -142,15 +142,61 @@ def _keyword_fallback_search(query: str, top_k: int = 2) -> list[dict]:
     ]
 
 
-@tool
-def search_knowledge_base(query: str) -> str:
-    """Search the company knowledge base using semantic vector similarity (FAISS + SentenceTransformers).
+def _search_personal_memory_faiss(query: str, email: str, embedder, top_k: int = 1) -> list:
+    from app.db.session import SessionLocal
+    from app.db.models import Ticket, UserProfile
+    import faiss
+    
+    db = SessionLocal()
+    docs = []
+    try:
+        profile = db.query(UserProfile).filter(UserProfile.user_email == email).first()
+        if profile and profile.context_summary:
+            docs.append({"title": "User Profile Summary", "content": profile.context_summary})
+            
+        tickets = db.query(Ticket).filter(Ticket.user_email == email, Ticket.conversation_summary != None).all()
+        for t in tickets:
+            docs.append({"title": f"Past Ticket #{t.id}", "content": t.conversation_summary})
+            
+        if not docs:
+            return []
+            
+        texts = [f"{doc['title']}. {doc['content']}" for doc in docs]
+        embeddings = embedder.encode(texts, normalize_embeddings=True).astype("float32")
+        
+        dim = embeddings.shape[1]
+        temp_index = faiss.IndexFlatIP(dim)
+        temp_index.add(embeddings)
+        
+        query_embedding = embedder.encode([query], normalize_embeddings=True).astype("float32")
+        scores, indices = temp_index.search(query_embedding, min(top_k, len(docs)))
+        
+        results = []
+        for score, idx in zip(scores[0], indices[0]):
+            if idx >= 0 and score > 0.3: # threshold
+                results.append({
+                    "document": docs[idx],
+                    "score": float(round(score, 4)),
+                })
+        return results
+    except Exception as e:
+        print(f"[RAG] Personal memory search error: {e}")
+        return []
+    finally:
+        db.close()
 
-    Returns relevant FAQ articles, policy documents, and troubleshooting guides.
+
+@tool
+def search_knowledge_base(query: str, user_email: str = "") -> str:
+    """Search the company knowledge base using semantic vector similarity (FAISS + SentenceTransformers).
+    If user_email is provided, it also retrieves relevant past context (Semantic memory retrieval).
+
+    Returns relevant FAQ articles, policy documents, and relevant past user tickets.
     Includes similarity scores for RAG pipeline diagnostics.
 
     Args:
         query: The customer's question or the topic to search for.
+        user_email: The customer's email to search personal history.
     """
     index, embedder, documents = _get_faiss_index()
     top_k = 2
@@ -170,6 +216,12 @@ def search_knowledge_base(query: str) -> str:
                     "document": documents[idx],
                     "score": float(round(score, 4)),  # Cosine similarity (0.0 – 1.0)
                 })
+                
+        if user_email:
+            personal_results = _search_personal_memory_faiss(query, user_email, embedder, top_k=1)
+            results_with_scores.extend(personal_results)
+            # sort again by score
+            results_with_scores.sort(key=lambda x: x["score"], reverse=True)
 
     if not results_with_scores:
         titles = ", ".join([f"'{d['title']}'" for d in MOCK_DOCUMENTS])

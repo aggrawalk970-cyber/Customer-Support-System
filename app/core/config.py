@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     # ── App ───────────────────────────────────────────────────────────────────
     APP_VERSION: str = "2.0.0"
     DEBUG: bool = False
+    MAX_TOKENS: int = 4000
+    
+    # ── Auth ──────────────────────────────────────────────────────────────────
+    API_KEYS: str = "" # Comma-separated list of valid API keys
 
     @property
     def celery_broker_url(self) -> str:

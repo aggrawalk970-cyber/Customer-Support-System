@@ -103,9 +103,16 @@ def _run_specialist(
     logs = state.get("logs", []) or []
     tool_calls_log = list(state.get("tool_calls_log", []) or [])
     retrieval_sources = list(state.get("retrieval_sources", []) or [])
+    email = state.get("user_email", "")
+
+    # Inject the user's email into the context so the agent can use it for tools
+    agent_messages = list(messages)
+    if email:
+        from langchain_core.messages import SystemMessage
+        agent_messages.insert(0, SystemMessage(content=f"The current customer's email is: {email}"))
 
     # Run the ReAct sub-agent on the conversation history
-    response = agent.invoke({"messages": list(messages)})
+    response = agent.invoke({"messages": agent_messages})
     new_messages = response["messages"]
 
     # Only keep messages the agent appended (not the input messages)

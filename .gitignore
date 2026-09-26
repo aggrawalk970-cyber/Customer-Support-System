@@ -14,6 +14,8 @@ __pycache__/
 
 # Local SQLite databases (for mock runs)
 *.db
+*.db-shm
+*.db-wal
 customer_support.db
 
 # IDE settings

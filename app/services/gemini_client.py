@@ -35,7 +35,7 @@ def get_llm(model_tier: str = "default") -> BaseChatModel:
         from langchain_google_genai import ChatGoogleGenerativeAI
         logger.info("Using Gemini LLM", extra={"model_tier": model_tier})
         return ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model="gemini-3.5-flash-lite",
             google_api_key=settings.GEMINI_API_KEY,
             temperature=0,
         )

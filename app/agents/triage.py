@@ -52,11 +52,38 @@ def triage_node(state: AgentState) -> dict:
     messages = state["messages"]
     logs = state.get("logs", []) or []
 
+    # Fetch long-term memory (Episodic + Semantic)
+    history_context = ""
+    email_for_lookup = state.get("user_email", "")
+    if email_for_lookup:
+        from app.db.session import SessionLocal
+        from app.db.models import Ticket, UserProfile
+        db = SessionLocal()
+        try:
+            profile = db.query(UserProfile).filter(UserProfile.user_email == email_for_lookup).first()
+            tickets = db.query(Ticket).filter(Ticket.user_email == email_for_lookup).order_by(Ticket.created_at.desc()).limit(3).all()
+            
+            context_parts = []
+            if profile and profile.context_summary:
+                context_parts.append(f"User Profile/Preferences: {profile.context_summary}")
+                
+            if tickets:
+                ticket_details = "\n".join([f"- Ticket #{t.id} ({t.status}): {t.issue}" for t in tickets])
+                context_parts.append(f"Recent Tickets:\n{ticket_details}")
+                
+            if context_parts:
+                history_context = "\n\n--- LONG-TERM MEMORY CONTEXT ---\n" + "\n\n".join(context_parts) + "\n--------------------------------\nUse this context to inform your classification and responses if the user's issue relates to past tickets."
+        except Exception as db_e:
+            logs.append(f"[Triage] Error fetching history: {db_e}")
+        finally:
+            db.close()
+
     # .with_structured_output() uses function-calling to guarantee schema compliance
     llm = get_llm()
     structured_llm = llm.with_structured_output(TriageDecision)
 
-    llm_messages = [SystemMessage(content=TRIAGE_SYSTEM_PROMPT)] + list(messages)
+    full_system_prompt = TRIAGE_SYSTEM_PROMPT + history_context
+    llm_messages = [SystemMessage(content=full_system_prompt)] + list(messages)
 
     # Run structured classification — returns a TriageDecision Pydantic object
     try:

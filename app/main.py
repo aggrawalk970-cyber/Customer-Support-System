@@ -22,7 +22,7 @@ from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.core.rate_limit import limiter
-from app.api.v1 import chat, tasks, approvals, health
+from app.api.v1 import chat, tasks, approvals, health, stats
 
 logger = get_logger(__name__)
 
@@ -57,15 +57,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi import Depends
+from app.core.auth import verify_api_key
+
 # ── Register API Routers ───────────────────────────────────────────────────────
 # Versioned prefix: /api/v1/
-app.include_router(chat.router,      prefix="/api/v1", tags=["Chat"])
-app.include_router(tasks.router,     prefix="/api/v1", tags=["Async Tasks"])
-app.include_router(approvals.router, prefix="/api/v1", tags=["Approvals"])
+app.include_router(chat.router,      prefix="/api/v1", tags=["Chat"], dependencies=[Depends(verify_api_key)])
+app.include_router(tasks.router,     prefix="/api/v1", tags=["Async Tasks"], dependencies=[Depends(verify_api_key)])
+app.include_router(approvals.router, prefix="/api/v1", tags=["Approvals"], dependencies=[Depends(verify_api_key)])
+app.include_router(stats.router,     prefix="/api/v1", tags=["Stats"], dependencies=[Depends(verify_api_key)])
 app.include_router(health.router,    prefix="/api/v1", tags=["Health"])
 
 # Legacy routes (backward compat) — old /api/chat, /api/health still work
-app.include_router(chat.router,      prefix="/api",    tags=["Chat (Legacy)"])
+app.include_router(chat.router,      prefix="/api",    tags=["Chat (Legacy)"], dependencies=[Depends(verify_api_key)])
 app.include_router(health.router,    prefix="/api",    tags=["Health (Legacy)"])
 
 
